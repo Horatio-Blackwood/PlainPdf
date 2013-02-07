@@ -233,13 +233,13 @@ public class Pdf {
 
         pdf.renderLine("Here is the a line, 24pt.", PdfFont.COURIER, 24);
         pdf.renderLine("Here is the a line, 18pt.", PdfFont.COURIER_BOLD, 18);
-        pdf.renderLine("Here is the a line, 16pt.", PdfFont.COURIER_BOLD_OBLIQUE, 16);
-        pdf.renderLine("Here is the a line, 12pt.", PdfFont.COURIER_OBLIQUE, 12);
+        pdf.renderLine("Here is the a line, 16pt.", PdfFont.COURIER_BOLD_ITALIC, 16);
+        pdf.renderLine("Here is the a line, 12pt.", PdfFont.COURIER_ITALIC, 12);
 
         pdf.renderLine("Here is the a line, 24pt.", PdfFont.HELVETICA, 24);
         pdf.renderLine("Here is the a line, 18pt.", PdfFont.HELVETICA_BOLD, 18);
-        pdf.renderLine("Here is the a line, 16pt.", PdfFont.HELVETICA_BOLD_OBLIQUE, 16);
-        pdf.renderLine("Here is the a line, 12pt.", PdfFont.HELVETICA_OBLIQUE, 12);
+        pdf.renderLine("Here is the a line, 16pt.", PdfFont.HELVETICA_BOLD_ITALIC, 16);
+        pdf.renderLine("Here is the a line, 12pt.", PdfFont.HELVETICA_ITALIC, 12);
 
 
         pdf.renderLine("Here is the a line, 24pt.", PdfFont.TIMES, 24);
