@@ -1,9 +1,6 @@
 package plainpdf;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.pdfbox.exceptions.COSVisitorException;
@@ -48,9 +45,6 @@ public class Pdf {
     /** The height of the Top and Bottom Margins. */
     private static final int TOP_BOTTOM_MARGINS = 80;
 
-    /** A list to cache words removed when calculating line lengths for word wrap. */
-    private List<String> m_tailWordCache = new ArrayList<>();
-
 
     /** Constructs a new, blank PDF document. */
     public Pdf(){
@@ -89,37 +83,60 @@ public class Pdf {
      * @return true if the call resulted in a line being written to the file.
      * @throws IOException if an error occurs rendering the line to the pdf file.
      */
-    public boolean renderLine(String line, PdfFont font, int fontSize) throws IOException{
+     public boolean renderLine(String line, PdfFont font, int fontSize) throws IOException {
         String toRender = line.trim();
-        float offset = getFontOffset(font.getFont(), fontSize);
 
         if (getStringWidth(toRender, font.getFont(), fontSize) > m_pgWidth){
-            int index = toRender.lastIndexOf(" ");
-            String head = toRender.substring(0, index);
-            m_tailWordCache.add(toRender.substring(index).trim());
-
-            // Call render on the timmed header.  If this call results in a write, (ie if its short enough), then
-            // call renderLine on the tail.
-            if (renderLine(head, font, fontSize)){
-                renderLine(getCachedTail(), font, fontSize);
-            }
+            String[] words = line.split(" ");
+            StringBuilder lineToRender = new StringBuilder();
+            for (int word = 0; word < words.length; word++){
+                if (getStringWidth(lineToRender.toString().trim(), font.getFont(), fontSize) < m_pgWidth){
+                    lineToRender.append(words[word]);
+                    lineToRender.append(" ");
+                } else {
+                    int index = lineToRender.toString().trim().lastIndexOf(" ");
+                    String fittedLine = lineToRender.toString().substring(0, index);
+                    writeLine(fittedLine.trim(), font, fontSize);
+                    
+                    // Recursively call this for the remaining text.
+                    renderLine(line.substring(fittedLine.length() + 1), font, fontSize);
+                    return true;
+                }
+             }
+            
         } else {
-            m_contentStream.setFont(font.getFont(), fontSize);
-            m_contentStream.moveTextPositionByAmount(0, offset);
-            m_contentStream.drawString(toRender);
-            m_currentY = m_currentY + offset;
-            checkPage();
+            writeLine(toRender, font, fontSize);
             return true;
         }
 
         return false;
+    }
+    
+     /**
+      * Actually performs the work of writing the text to the PDF file.
+      * 
+      * @param text the text to write - It is assumed that this text fits on a line width-wise.
+      * @param font the font to render the text in.
+      * @param fontSize the size of the font to render the text with.
+      * @param offset the vertical offset calculated for this font and size.
+      * 
+      * @throws IOException if an error occurs writing out the text to the PDF.
+      */
+    private void writeLine(String text, PdfFont font, int fontSize) throws IOException{
+        float offset = getFontOffset(font.getFont(), fontSize);
+        m_contentStream.setFont(font.getFont(), fontSize);
+        m_contentStream.moveTextPositionByAmount(0, offset);
+        m_contentStream.drawString(text);
+        m_currentY = m_currentY + offset;
+        checkPage();  
     }
 
     /**
      * Inserts a blank line of the height of the supplied font.
      *
      * @param font the font face to use.
-     * @param fontSize the size (ie 12pt, 32pt).
+     * @param fontSize the size (ie 12 for 12pt, or 32 for 32pt).
+     * @throws IOException  
      */
     public void insertBlankLine(PdfFont font, int fontSize) throws IOException{
         float offset = getFontOffset(font.getFont(), fontSize);
@@ -141,7 +158,10 @@ public class Pdf {
         m_doc.save(filename);
     }
 
-    /** Closes this file for modifications. */
+    /** 
+     * Closes this file for modifications.
+     * @throws IOException if IO errors occur during closing of the file.
+     */
     public void close() throws IOException{
         m_doc.close();
     }
@@ -211,23 +231,11 @@ public class Pdf {
     }
 
     /**
-     * A helper method that takes the words stored in the tail words cache and assembles them in the proper order as
-     * the entire tail.
-     *
-     * @return the complete tail cache.
+     * A demo main.
+     * @param blargs arguments.
+     * @throws IOException if errors occur during PDF generation.
+     * @throws COSVisitorException if errors occur during PDF generation.
      */
-    private String getCachedTail(){
-        StringBuilder bldr = new StringBuilder();
-        Collections.reverse(m_tailWordCache);
-        for (String word : m_tailWordCache){
-            bldr.append(word);
-            bldr.append(" ");
-        }
-        m_tailWordCache.clear();
-
-        return bldr.toString().trim();
-    }
-
     public static void main(String[] blargs) throws IOException, COSVisitorException{
         Pdf pdf = new Pdf();
 
@@ -247,7 +255,7 @@ public class Pdf {
         pdf.renderLine("Here is the a line, 16pt.", PdfFont.TIMES_BOLD_ITALIC, 16);
         pdf.renderLine("Here is the a line, 12pt.", PdfFont.TIMES_ITALIC, 12);
 
-        pdf.saveAs("file.pdf");
+        pdf.saveAs("generic.pdf");
         pdf.close();
     }
 }
