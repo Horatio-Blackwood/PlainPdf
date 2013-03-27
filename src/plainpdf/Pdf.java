@@ -91,8 +91,13 @@ public class Pdf {
             StringBuilder lineToRender = new StringBuilder();
             for (int word = 0; word < words.length; word++){
                 if (getStringWidth(lineToRender.toString().trim(), font.getFont(), fontSize) < m_pgWidth){
-                    lineToRender.append(words[word]);
-                    lineToRender.append(" ");
+                    // 
+                    if (words[word].equals(words[words.length - 1])) {
+                        writeLine(lineToRender.toString().trim(), font, fontSize);
+                    } else {
+                        lineToRender.append(words[word]);
+                        lineToRender.append(" ");                        
+                    }
                 } else {
                     int index = lineToRender.toString().trim().lastIndexOf(" ");
                     String fittedLine = lineToRender.toString().substring(0, index);
@@ -156,16 +161,10 @@ public class Pdf {
         m_contentStream.endText();
         m_contentStream.close();
         m_doc.save(filename);
-    }
-
-    /** 
-     * Closes this file for modifications.
-     * @throws IOException if IO errors occur during closing of the file.
-     */
-    public void close() throws IOException{
         m_doc.close();
     }
 
+    
     /**
      * Returns the vertical offset distance (the height) of the given font.
      *
@@ -178,6 +177,7 @@ public class Pdf {
         return -1 * (font.getFontDescriptor().getFontBoundingBox().getHeight() / 1000 * fontSize);
     }
 
+    
     /**
      * Checks the current page position vs the bottom margin to see if its time to create a new page.
      * If a new page is required, a new one is initialized and all associated variables updated.
@@ -188,6 +188,7 @@ public class Pdf {
         }
     }
 
+    
     /**
      * Returns the width in page units of the string using the font and font size specified.
      *
@@ -202,12 +203,14 @@ public class Pdf {
         return (font.getStringWidth(str) / 1000 * fontSize);
     }
 
+    
     /** Resets the current X, Y text positions to their default values (the upper left corner of the text area). */
     private void resetCurrentXandY(){
         m_currentX = SIDE_MARGIN;
         m_currentY = m_pgHeight - TOP_BOTTOM_MARGINS;
     }
 
+    
     /** Initializes a new page for this PDF document. */
     private void newPage(){
         try {
@@ -229,33 +232,51 @@ public class Pdf {
             Logger.getLogger(Pdf.class.getName()).log(Level.SEVERE, "Error initializing content stream for new page.", ex);
         }
     }
-
+    
     /**
-     * A demo main.
-     * @param blargs arguments.
-     * @throws IOException if errors occur during PDF generation.
-     * @throws COSVisitorException if errors occur during PDF generation.
+     * Call this method to generate a PDF that describes how to use PlainPdf.
+     * 
+     * @throws IOException if an error occurs creating or writing the file.
+     * @throws COSVisitorException  if an error occurs creating or writing the file.
      */
-    public static void main(String[] blargs) throws IOException, COSVisitorException{
+    public static void documentation() throws IOException, COSVisitorException {
         Pdf pdf = new Pdf();
-
-        pdf.renderLine("Here is the a line, 24pt.", PdfFont.COURIER, 24);
-        pdf.renderLine("Here is the a line, 18pt.", PdfFont.COURIER_BOLD, 18);
-        pdf.renderLine("Here is the a line, 16pt.", PdfFont.COURIER_BOLD_ITALIC, 16);
-        pdf.renderLine("Here is the a line, 12pt.", PdfFont.COURIER_ITALIC, 12);
-
-        pdf.renderLine("Here is the a line, 24pt.", PdfFont.HELVETICA, 24);
-        pdf.renderLine("Here is the a line, 18pt.", PdfFont.HELVETICA_BOLD, 18);
-        pdf.renderLine("Here is the a line, 16pt.", PdfFont.HELVETICA_BOLD_ITALIC, 16);
-        pdf.renderLine("Here is the a line, 12pt.", PdfFont.HELVETICA_ITALIC, 12);
-
-
-        pdf.renderLine("Here is the a line, 24pt.", PdfFont.TIMES, 24);
-        pdf.renderLine("Here is the a line, 18pt.", PdfFont.TIMES_BOLD, 18);
-        pdf.renderLine("Here is the a line, 16pt.", PdfFont.TIMES_BOLD_ITALIC, 16);
-        pdf.renderLine("Here is the a line, 12pt.", PdfFont.TIMES_ITALIC, 12);
-
-        pdf.saveAs("generic.pdf");
-        pdf.close();
+        pdf.renderLine("How to use PlainPdf", PdfFont.HELVETICA, 24);
+        pdf.insertBlankLine(PdfFont.HELVETICA, 12);
+        pdf.renderLine("Using PlainPDF is very simple.  Simple instantiate a PDF object, give it some lines of text, "
+                + "and save it.  PlainPdf handles line wrapping and appending additional pages as needed.  You don't "
+                + "need to keep track of page sizes.  No calculating text widths in arcane units of measure.  No "
+                + "dynamically handling page adds based on the pixel height of your text.  Just instantiate, render, "
+                + "and save.",
+                PdfFont.HELVETICA, 10);
+        pdf.insertBlankLine(PdfFont.HELVETICA, 12);
+        pdf.renderLine("That's it.", PdfFont.HELVETICA, 10);
+        pdf.insertBlankLine(PdfFont.HELVETICA, 12);
+        
+        pdf.renderLine("// A Simple Example - Hello_World.pdf", PdfFont.COURIER_BOLD, 12);
+        pdf.renderLine("Pdf pdf = new Pdf();", PdfFont.COURIER, 10);
+        pdf.renderLine("pdf.renderLine(\"Hello, world!\", PdfFont.TIMES, 12);", PdfFont.COURIER, 10);
+        pdf.renderLine("pdf.saveAs(\"Hello_World.pdf\");", PdfFont.COURIER, 10);
+        pdf.insertBlankLine(PdfFont.COURIER, 12);
+        
+        pdf.renderLine("// A Simple Example", PdfFont.COURIER_BOLD, 12);
+        pdf.renderLine("Pdf pdf = new Pdf();", PdfFont.COURIER, 10);
+        pdf.renderLine("pdf.renderLine(\"My Life Story\", PdfFont.HELVETICA_BOLD, 24);", PdfFont.COURIER, 10);
+        pdf.renderLine("pdf.insertBlankLine(PdfFont.HELVETICA, 12);", PdfFont.COURIER, 10);
+        pdf.insertBlankLine(PdfFont.HELVETICA, 12);
+        pdf.renderLine("pdf.renderLine(\"I was born in the 80s.\", PdfFont.HELVETICA, 12);", PdfFont.COURIER, 10);
+        pdf.renderLine("pdf.renderLine(\"I grew up in the 90s.\", PdfFont.HELVETICA, 12);", PdfFont.COURIER, 10);
+        pdf.renderLine("pdf.renderLine(\"I wrote a Java library called PlainPdf.\", PdfFont.HELVETICA, 12);", PdfFont.COURIER, 10);
+        pdf.renderLine("pdf.renderLine(\"I am not yet dead.\", PdfFont.HELVETICA, 12);", PdfFont.COURIER, 10);
+        pdf.insertBlankLine(PdfFont.HELVETICA, 12);
+        pdf.renderLine("pdf.saveAs(\"my_life.pdf\");", PdfFont.COURIER, 10);
+        
+        pdf.insertBlankLine(PdfFont.HELVETICA, 12);
+        pdf.insertBlankLine(PdfFont.HELVETICA, 12);
+        
+        pdf.renderLine("This document was created using PlainPdf.", PdfFont.HELVETICA, 10);
+        pdf.renderLine("https://github.com/Horatio-Blackwood/PlainPdf", PdfFont.HELVETICA, 10);
+        
+        pdf.saveAs("quick-start.pdf");
     }
 }
