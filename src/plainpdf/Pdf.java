@@ -389,8 +389,4 @@ public class Pdf {
 
         pdf.saveAs("quick-start.pdf");
     }
-
-    public static void main(String[] str) throws IOException, COSVisitorException{
-        Pdf.documentation();
-    }
 }
