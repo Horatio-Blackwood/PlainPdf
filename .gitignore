@@ -4,6 +4,6 @@
 *.ear
 
 dist/*
-build/built-jar.properties
+build/*
 nbproject/
 nbproject/*
