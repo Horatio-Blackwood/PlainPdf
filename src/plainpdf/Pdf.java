@@ -14,7 +14,7 @@ import org.apache.pdfbox.pdmodel.font.PDFont;
  *
  * @author adam
  * @date Feb 3, 2013
- * Last Updated:  February 5, 2013.
+ * Last Updated:  April 15, 2013.
  */
 public class Pdf {
 
@@ -141,7 +141,6 @@ public class Pdf {
             throw new IllegalArgumentException("Parameter 'fontSize' must not be less than or equal to zero.");
         }
         String toRender = line.trim();
-
         if (getStringWidth(toRender, font.getFont(), fontSize) > m_pgWidth){
             String[] words = line.split(" ");
             StringBuilder lineToRender = new StringBuilder();
@@ -169,7 +168,7 @@ public class Pdf {
 
         } else {
             writeLine(toRender, font, fontSize);
-        }
+        }            
     }
 
 
