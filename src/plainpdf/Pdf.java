@@ -351,7 +351,7 @@ public class Pdf {
         Pdf pdf = new Pdf(PdfFont.HELVETICA, 10);
         pdf.renderLine("How to use PlainPdf", PdfFont.HELVETICA, 24);
         pdf.insertBlankLine(12);
-        pdf.renderLine("Using PlainPDF is very simple.  Simple instantiate a PDF object, give it some lines of text, "
+        pdf.renderLine("Using PlainPDF is very simple.  Simply instantiate a PDF object, give it some lines of text, "
                 + "and save it.  PlainPdf handles line wrapping and appending additional pages as needed.  You don't "
                 + "need to keep track of page sizes.  No calculating text widths in arcane units of measure.  No "
                 + "dynamically handling page adds based on the pixel height of your text.  Just instantiate, render, "
