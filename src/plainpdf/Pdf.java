@@ -1,5 +1,6 @@
 package plainpdf;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,10 +51,25 @@ public class Pdf {
 
     /** The default font to use if no other font is specified. */
     private PdfFont m_defaultFont;
+    
+    /** The default Color to render the text in. */
+    private Color m_defaultColor;
 
-    /** Constructs a new, blank PDF document with a default font of plain Helvetica and a default font size of 12. */
+    /** 
+     * Constructs a new, blank PDF document with a default font of plain Helvetica and a default font 
+     * size of 12 which will render black letters.
+     */
     public Pdf(){
-        this(PdfFont.HELVETICA, 12);
+        this(PdfFont.HELVETICA, 12, Color.BLACK);
+    }
+    
+    /** 
+     * Constructs a new, blank PDF document with the specified font and font size which will render black letters.
+     * @param defaultFont the default PdFont to use for rendering.
+     * @param defaultFontSize the default size to use for rendering.
+     */
+    public Pdf(PdfFont defaultFont, int defaultFontSize) {
+        this(defaultFont, defaultFontSize, Color.BLACK);
     }
 
     /**
@@ -63,19 +79,24 @@ public class Pdf {
      * null.
      * @param defaultFontSize the default font size to use when rendering text, unless another font size is specified.  If
      * this value is less than or equal to 0, an IllegalArgumentException is thrown.
+     * @param defaultColor the default color to render the text in.
      *
      * @throws IllegalArgumentException if the defaultFont parameter is null or if the parameter 'size' is less than or
      * equal to zero.
      */
-    public Pdf(PdfFont defaultFont, int defaultFontSize){
+    public Pdf(PdfFont defaultFont, int defaultFontSize, Color defaultColor){
         if (defaultFont == null){
             throw new IllegalArgumentException("Parameter 'defaultFont' cannot be null.");
         }
         if (defaultFontSize <= 0){
             throw new IllegalArgumentException("Parameter 'size' must not be less than or equal to zero.");
         }
+        if (defaultColor == null) {
+            throw new IllegalArgumentException("Parameter 'color' cannot be null.");
+        }
         m_defaultFont = defaultFont;
         m_defaultFontSize = defaultFontSize;
+        m_defaultColor = defaultColor;
 
         try {
             // Initialize the Document
@@ -109,7 +130,33 @@ public class Pdf {
      * @throws IOException if an error occurs writing the text to the PDF.
      */
     public void renderLine(String line) throws IOException{
-        renderLine(line, m_defaultFont, m_defaultFontSize);
+        renderLine(line, m_defaultFont, m_defaultFontSize, m_defaultColor);
+    }
+    
+    /**
+     * Draws the supplied line of text to this PDF document.  If necessary, this method call will wrap the text and add
+     * additional pages depending on the length of the line of text added.
+     *
+     * @param line the text to render to the file.
+     * @param color the color to render this line in.
+     *
+     * @throws IOException if an error occurs writing the text to the PDF.
+     */
+    public void renderLine(String line, Color color) throws IOException{
+        renderLine(line, m_defaultFont, m_defaultFontSize, color);
+    }
+    
+    /**
+     * Draws the supplied line of text to this PDF document.  If necessary, this method call will wrap the text and add
+     * additional pages depending on the length of the line of text added.
+     *
+     * @param line the text to render to the file.
+     * @param font the font to render this line in.
+     *
+     * @throws IOException if an error occurs writing the text to the PDF.
+     */
+    public void renderLine(String line, PdfFont font) throws IOException{
+        renderLine(line, font, m_defaultFontSize, m_defaultColor);
     }
 
     /**
@@ -122,7 +169,22 @@ public class Pdf {
      * @throws IOException if an error occurs writing the text to the PDF.
      */
     public void renderLine(String line, int fontSize) throws IOException{
-        renderLine(line, m_defaultFont, fontSize);
+        renderLine(line, m_defaultFont, fontSize, m_defaultColor);
+    }
+    
+    /**
+     * Renders a single line of text to the document.  If necessary this method will wrap the text of the line
+     * repeatedly.
+     *
+     * @param line the String of text to render to the PDF.
+     * @param font the font style to render this line in.
+     * @param fontSize the font size to render the text, (ie 12 point, 14 point etc).
+     *
+     * @throws IOException if an error occurs rendering the line to the PDf file.
+     * @throws IllegalArgumentException if the provided fontSize is less than or equal to zero.
+     */
+    public void renderLine(String line, PdfFont font, int fontSize) throws IOException{
+        renderLine(line, font, fontSize, m_defaultColor);
     }
 
     /**
@@ -132,11 +194,12 @@ public class Pdf {
      * @param line the String of text to render to the PDF.
      * @param font the font style to render this line in.
      * @param fontSize the font size to render the text, (ie 12 point, 14 point etc).
+     * @param color the color to render the text in.
      *
-     * @throws IOException if an error occurs rendering the line to the pdf file.
+     * @throws IOException if an error occurs rendering the line to the PDf file.
      * @throws IllegalArgumentException if the provided fontSize is less than or equal to zero.
      */
-     public void renderLine(String line, PdfFont font, int fontSize) throws IOException {
+     public void renderLine(String line, PdfFont font, int fontSize, Color color) throws IOException {
         if (fontSize <= 0){
             throw new IllegalArgumentException("Parameter 'fontSize' must not be less than or equal to zero.");
         }
@@ -146,10 +209,12 @@ public class Pdf {
             StringBuilder lineToRender = new StringBuilder();
 
             render:
+            // For each word in the text to render...
             for (int word = 0; word < words.length; word++){
                 if (getStringWidth(lineToRender.toString().trim(), font.getFont(), fontSize) < m_pgWidth){
                     if (words[word].equals(words[words.length - 1])) {
-                        writeLine(lineToRender.toString().trim(), font, fontSize);
+                        writeLine(lineToRender.toString().trim(), font, fontSize, color);
+                        renderLine(words[word], font, fontSize, color);
                         break render;
                     } else {
                         lineToRender.append(words[word]);
@@ -158,16 +223,16 @@ public class Pdf {
                 } else {
                     int index = lineToRender.toString().trim().lastIndexOf(" ");
                     String fittedLine = lineToRender.toString().substring(0, index);
-                    writeLine(fittedLine.trim(), font, fontSize);
+                    writeLine(fittedLine.trim(), font, fontSize, color);
 
                     // Recursively call this for the remaining text.
-                    renderLine(line.substring(fittedLine.length() + 1), font, fontSize);
+                    renderLine(line.substring(fittedLine.length() + 1), font, fontSize, color);
                     break render;
                 }
              }
 
         } else {
-            writeLine(toRender, font, fontSize);
+            writeLine(toRender, font, fontSize, color);
         }            
     }
 
@@ -182,9 +247,10 @@ public class Pdf {
       *
       * @throws IOException if an error occurs writing out the text to the PDF.
       */
-    private void writeLine(String text, PdfFont font, int fontSize) throws IOException{
+    private void writeLine(String text, PdfFont font, int fontSize, Color color) throws IOException {
         float offset = getFontOffset(font.getFont(), fontSize);
         m_contentStream.setFont(font.getFont(), fontSize);
+        m_contentStream.setNonStrokingColor(color);
         m_contentStream.moveTextPositionByAmount(0, offset);
         m_contentStream.drawString(text);
         m_currentY = m_currentY + offset;
@@ -210,13 +276,26 @@ public class Pdf {
      * Sets the default font size for this PDF document.
      * @param size the size to set as the new default for this document.
      *
-     * @throws NullPointerException if the supplied font size is null.
+     * @throws NullPointerException if the supplied font size is less than or equal to zero.
      */
     public void setDefaultFontSize(int size){
         if (size <= 0){
             throw new IllegalArgumentException("Parameter 'size' must not be less than or equal to zero.");
         }
         m_defaultFontSize = size;
+    }
+    
+    /**
+     * Sets the default color for text in this PDF document.
+     * @param color the color to render the text in.
+     *
+     * @throws NullPointerException if the supplied color is null.
+     */
+    public void setDefaultColor(Color color){
+        if (color == null){
+            throw new IllegalArgumentException("Parameter 'color' must not be null.");
+        }
+        m_defaultColor = color;
     }
 
 
@@ -255,6 +334,11 @@ public class Pdf {
         float offset = getFontOffset(font.getFont(), fontSize);
         m_contentStream.moveTextPositionByAmount(0, offset);
         m_currentY = m_currentY + offset;
+    }
+    
+    /** Inserts a page break into the document. */
+    public void insertPageBreak() {
+        newPage();
     }
 
     /**
@@ -348,10 +432,10 @@ public class Pdf {
      * @throws COSVisitorException  if an error occurs creating or writing the file.
      */
     public static void documentation() throws IOException, COSVisitorException {
-        Pdf pdf = new Pdf(PdfFont.HELVETICA, 10);
+        Pdf pdf = new Pdf(PdfFont.HELVETICA, 10, Color.BLACK);
         pdf.renderLine("How to use PlainPdf", PdfFont.HELVETICA, 24);
         pdf.insertBlankLine(12);
-        pdf.renderLine("Using PlainPDF is very simple.  Simply instantiate a PDF object, give it some lines of text, "
+        pdf.renderLine("Using PlainPDF is very simple.  Simple instantiate a PDF object, give it some lines of text, "
                 + "and save it.  PlainPdf handles line wrapping and appending additional pages as needed.  You don't "
                 + "need to keep track of page sizes.  No calculating text widths in arcane units of measure.  No "
                 + "dynamically handling page adds based on the pixel height of your text.  Just instantiate, render, "
@@ -361,6 +445,7 @@ public class Pdf {
         pdf.insertBlankLine(12);
 
         pdf.renderLine("// A Simple Example - Hello_World.pdf", PdfFont.COURIER_BOLD, 12);
+        pdf.setDefaultFont(PdfFont.COURIER);
         pdf.setDefaultFont(PdfFont.COURIER);
         pdf.renderLine("Pdf pdf = new Pdf(PdfFont.TIMES, 12);");
         pdf.renderLine("pdf.renderLine(\"Hello, world!\");");

@@ -27,8 +27,9 @@ public enum PdfFont {
     TIMES_BOLD(PDType1Font.TIMES_BOLD),
     TIMES_ITALIC(PDType1Font.TIMES_ITALIC),
     TIMES_BOLD_ITALIC(PDType1Font.TIMES_BOLD_ITALIC);
-
-    private PDType1Font m_font;
+    
+    /** The font value. */
+    private final PDType1Font m_font;
 
     /**
      * Private constructor.
