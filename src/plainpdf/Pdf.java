@@ -200,41 +200,41 @@ public class Pdf {
      * @throws IllegalArgumentException if the provided fontSize is less than or equal to zero.
      */
      public void renderLine(String line, PdfFont font, int fontSize, Color color) throws IOException {
-        if (fontSize <= 0){
-            throw new IllegalArgumentException("Parameter 'fontSize' must not be less than or equal to zero.");
-        }
-        String toRender = line.trim();
-        if (getStringWidth(toRender, font.getFont(), fontSize) > m_pgWidth){
-            String[] words = line.split(" ");
-            StringBuilder lineToRender = new StringBuilder();
+         if (fontSize <= 0){
+             throw new IllegalArgumentException("Parameter 'fontSize' must not be less than or equal to zero.");
+         }
+         String toRender = line.trim();
+         if (getStringWidth(toRender, font.getFont(), fontSize) > m_pgWidth){
+             String[] words = line.split(" ");
+             StringBuilder lineToRender = new StringBuilder();
 
-            render:
-            // For each word in the text to render...
-            for (int word = 0; word < words.length; word++){
-                if (getStringWidth(lineToRender.toString().trim(), font.getFont(), fontSize) < m_pgWidth){
-                    if (words[word].equals(words[words.length - 1])) {
-                        writeLine(lineToRender.toString().trim(), font, fontSize, color);
-                        renderLine(words[word], font, fontSize, color);
-                        break render;
-                    } else {
-                        lineToRender.append(words[word]);
-                        lineToRender.append(" ");
-                    }
-                } else {
-                    int index = lineToRender.toString().trim().lastIndexOf(" ");
-                    String fittedLine = lineToRender.toString().substring(0, index);
-                    writeLine(fittedLine.trim(), font, fontSize, color);
+             render:
+             // For each word in the text to render...
+             for (int word = 0; word < words.length; word++){
+                 if (getStringWidth(lineToRender.toString().trim(), font.getFont(), fontSize) < m_pgWidth) {
+                     if (word == words.length - 1) {
+                         writeLine(lineToRender.toString().trim(), font, fontSize, color);
+                         renderLine(words[word], font, fontSize, color);
+                         break render;
+                     } else {
+                         lineToRender.append(words[word]);
+                         lineToRender.append(" ");
+                     }
+                 } else {
+                     int index = lineToRender.toString().trim().lastIndexOf(" ");
+                     String fittedLine = lineToRender.toString().substring(0, index);
+                     writeLine(fittedLine.trim(), font, fontSize, color);
 
-                    // Recursively call this for the remaining text.
-                    renderLine(line.substring(fittedLine.length() + 1), font, fontSize, color);
-                    break render;
-                }
-             }
+                     // Recursively call this for the remaining text.
+                     renderLine(line.substring(fittedLine.length() + 1), font, fontSize, color);
+                     break render;
+                 }
+              }
 
-        } else {
-            writeLine(toRender, font, fontSize, color);
-        }            
-    }
+         } else {
+             writeLine(toRender, font, fontSize, color);
+         }            
+     }
 
 
      /**
